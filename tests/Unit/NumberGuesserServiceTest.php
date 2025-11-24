@@ -77,7 +77,7 @@ class NumberGuesserServiceTest extends TestCase
         $this->assertEquals(0, $result['attempts']); 
     }
 
-    public function testItProvidesTooLowFeedback(): void // Consider making a data provider to pass in low and high
+    public function testItProvidesTooLowFeedback(): void 
     {
         $this->service->setupGame(1);
 
