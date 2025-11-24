@@ -172,7 +172,7 @@ class NumberGuesserCommandTest extends TestCase
     {
         $this->artisan('number-guesser')
             ->expectsQuestion('Choose your difficulty level:', '1') 
-            ->expectsQuestion('Enter your guess (5 attempts left)', 'no')
+            ->expectsQuestion('Enter your guess (5 attempts left)', '100')
             ->expectsOutput('Please enter a number between 1 and 10')
             ->expectsQuestion('Enter your guess (5 attempts left)', 'exit')
             ->assertExitCode(0);

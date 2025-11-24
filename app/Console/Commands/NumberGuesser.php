@@ -7,7 +7,6 @@ use function Laravel\Prompts\confirm;
 use function Laravel\Prompts\text;
 use Illuminate\Console\Command;
 
-
 class NumberGuesser extends Command
 {
     protected $signature = 'number-guesser';
