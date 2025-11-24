@@ -168,11 +168,11 @@ class NumberGuesserCommandTest extends TestCase
             ->assertExitCode(0);
     }
 
-    public function testItHandlesInvalidNumericInput(): void
+    public function testItHandlesNonNumericInput(): void
     {
         $this->artisan('number-guesser')
             ->expectsQuestion('Choose your difficulty level:', '1') 
-            ->expectsQuestion('Enter your guess (5 attempts left)', '100')
+            ->expectsQuestion('Enter your guess (5 attempts left)', 'NaN')
             ->expectsOutput('Please enter a number between 1 and 10')
             ->expectsQuestion('Enter your guess (5 attempts left)', 'exit')
             ->assertExitCode(0);
