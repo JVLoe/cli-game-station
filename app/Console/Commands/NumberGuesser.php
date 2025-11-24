@@ -13,14 +13,18 @@ class NumberGuesser extends Command
     protected $signature = 'number-guesser';
     protected $description = 'Number guesser game (interactive)';
 
+    public function __construct(private NumberGuesserService $gameService)
+    {
+        parent::__construct();
+    }
+
     public function handle()
     {
-        $gameService = new NumberGuesserService();
 
         do {
             $this->info('Welcome to the Number Guesser game! 🎯');
 
-            $options = $this->buildLevelOptions($gameService);
+            $options = $this->buildLevelOptions();
 
             $selection = select(
                 label: 'Choose your difficulty level:',
@@ -33,7 +37,7 @@ class NumberGuesser extends Command
             }
 
             $level = (int) $selection;
-            $shouldExit = $this->playLevel($level, $gameService);
+            $shouldExit = $this->playLevel($level);
 
             if ($shouldExit) {
                 break;
@@ -45,9 +49,9 @@ class NumberGuesser extends Command
         $this->info("Thanks for playing 👋");
     }
 
-    private function buildLevelOptions(NumberGuesserService $gameService): array 
+    private function buildLevelOptions(): array 
     {
-        $levels = $gameService->getAvailableLevels();
+        $levels = $this->gameService->getAvailableLevels();
         $options = []; 
 
         foreach ($levels as $levelNum => $levelData) {
@@ -68,11 +72,11 @@ class NumberGuesser extends Command
         return $options;
     }
 
-    private function playLevel(int $level, NumberGuesserService $gameService): bool
+    private function playLevel(int $level): bool
     {
-        $gameService->setupGame($level);
+        $this->gameService->setupGame($level);
 
-        $levelInfo = $gameService->getLevelInfo($level);
+        $levelInfo = $this->gameService->getLevelInfo($level);
         $range = $levelInfo['range']; // no min max?
 
         $this->info("\n=== Level {$level}: {$levelInfo['name']} ===");
@@ -81,7 +85,7 @@ class NumberGuesser extends Command
 
 
         while (true) {
-            $remaining = $gameService->getRemainingAttempts();
+            $remaining = $this->gameService->getRemainingAttempts();
             $guess = text(
                 label: "Enter your guess ({$remaining} attempts left)",
                 placeholder: 'Type a number...'
@@ -93,7 +97,7 @@ class NumberGuesser extends Command
 
 
             // Convert to integer and make the guess
-            $result = $gameService->makeGuess((int) $guess);
+            $result = $this->gameService->makeGuess((int) $guess);
 
             // Handle the service response
             switch ($result['status']) {
@@ -109,7 +113,7 @@ class NumberGuesser extends Command
                 case 'too_low':
                 case 'too_high':
                     $this->info($result['message']);
-                    $remaining = $result['remaining'] ?? $gameService->getRemainingAttempts();
+                    $remaining = $result['remaining'] ?? $this->gameService->getRemainingAttempts();
                     if ($remaining > 0 && $remaining < 3) {
                         $this->line("⚠️  Only {$remaining} attempts left!");
                     }
