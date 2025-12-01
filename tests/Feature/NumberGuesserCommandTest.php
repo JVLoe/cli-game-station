@@ -35,7 +35,7 @@ class NumberGuesserCommandTest extends TestCase
             ->andReturn(['name' => 'Easy', 'range' => [1, 10], 'max_attempts' => 5]);
 
         $serviceMock->shouldReceive('getRemainingAttempts')
-            ->andReturn(5, 4, 3); 
+            ->andReturn(5, 4);
 
         $serviceMock->shouldReceive('makeGuess')
             ->with(2)
@@ -88,10 +88,8 @@ class NumberGuesserCommandTest extends TestCase
         $serviceMock->shouldReceive('getLevelInfo')
             ->with(2)
             ->andReturn(['name' => 'Medium', 'range' => [1, 50], 'max_attempts' => 7]);
-
         $serviceMock->shouldReceive('getRemainingAttempts')
-            ->andReturn(7,6);
-
+            ->andReturn(7);
         $serviceMock->shouldReceive('makeGuess')
             ->with(32)
             ->once()
@@ -218,7 +216,6 @@ class NumberGuesserCommandTest extends TestCase
                 'attempts' => 1,
                 'remaining' => 4
             ]);
-
     
         $serviceMock->shouldReceive('makeGuess')
             ->with(10)
@@ -317,13 +314,33 @@ class NumberGuesserCommandTest extends TestCase
             ->assertExitCode(0);
     }
 
-    public function testItHandlesExitDuringGame()
+    public function testItHandlesExitDuringGame(): void
     {
-        $this->markTestSkipped();
-    }
+        $serviceMock = $this->mock(NumberGuesserService::class);
 
-    public function testItHandlesExitBeforeStartingGame()
-    {
-        $this->markTestSkipped();
+        $serviceMock->shouldReceive('getAvailableLevels')
+            ->andReturn([
+                1 => ['name' => 'Easy', 'range' => [1, 10], 'max_attempts' => 5],
+                2 => ['name' => 'Medium', 'range' => [1, 50], 'max_attempts' => 7],
+                3 => ['name' => 'Hard', 'range' => [1, 100], 'max_attempts' => 10],
+            ]);
+
+        $serviceMock->shouldReceive('setupGame')
+            ->with(2)
+            ->once();
+
+        $serviceMock->shouldReceive('getLevelInfo')
+            ->with(2)
+            ->andReturn(['name' => 'Medium', 'range' => [1, 50], 'max_attempts' => 7]);
+
+        $serviceMock->shouldReceive('getRemainingAttempts')
+            ->andReturn(7); 
+
+        $this->artisan('number-guesser')
+            ->expectsOutput('Welcome to the Number Guesser game! 🎯')
+            ->expectsQuestion('Choose your difficulty level:', '2')
+            ->expectsQuestion("Enter your guess (7 attempts left)", 'exit')
+            ->expectsOutput('Thanks for playing 👋')
+            ->assertExitCode(0);
     }
 }
