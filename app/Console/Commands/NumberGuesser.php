@@ -76,7 +76,7 @@ class NumberGuesser extends Command
         $this->gameService->setupGame($level);
 
         $levelInfo = $this->gameService->getLevelInfo($level);
-        $range = $levelInfo['range']; // no min max?
+        $range = $levelInfo['range']; 
 
         $this->info("\n=== Level {$level}: {$levelInfo['name']} ===");
         $this->info("Guess between {$range[0]}-{$range[1]}. You have {$levelInfo['max_attempts']} attempts!");
@@ -94,11 +94,8 @@ class NumberGuesser extends Command
                 return true;
             }
 
-
-            // Convert to integer and make the guess
             $result = $this->gameService->makeGuess((int) $guess);
 
-            // Handle the service response
             switch ($result['status']) {
                 case 'won':
                     $this->info($result['message']); 
@@ -108,13 +105,14 @@ class NumberGuesser extends Command
                     return false;
                 case 'invalid':
                     $this->info($result['message']); 
-                    break;
+                    break; 
                 case 'too_low':
                 case 'too_high':
-                    $this->info($result['message']);
                     $remaining = $result['remaining'] ?? $this->gameService->getRemainingAttempts();
                     if ($remaining > 0 && $remaining < 3) {
-                        $this->line("⚠️  Only {$remaining} attempts left!");
+                        $this->info("⚠️  Only {$remaining} attempts left!");
+                    } else {
+                        $this->info($result['message']);
                     }
                     break;
             }

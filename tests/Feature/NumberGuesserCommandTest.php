@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\TestCase;
-use App\Services\NumberGuesserService; 
+use App\Services\NumberGuesserService;
 
 class NumberGuesserCommandTest extends TestCase
 {
@@ -36,7 +36,6 @@ class NumberGuesserCommandTest extends TestCase
 
         $serviceMock->shouldReceive('getRemainingAttempts')
             ->andReturn(5, 4, 3); 
-
 
         $serviceMock->shouldReceive('makeGuess')
             ->with(2)
@@ -188,14 +187,134 @@ class NumberGuesserCommandTest extends TestCase
             ->assertExitCode(0);
     }
 
-    public function testItHandlesLosingTheGame()
+    public function testItHandlesLosingTheGame(): void
     {
-        $this->markTestSkipped();
+        $serviceMock = $this->mock(NumberGuesserService::class);
+
+        $serviceMock->shouldReceive('getAvailableLevels')
+            ->andReturn([
+                1 => ['name' => 'Easy', 'range' => [1, 10], 'max_attempts' => 5],
+                2 => ['name' => 'Medium', 'range' => [1, 50], 'max_attempts' => 7],
+                3 => ['name' => 'Hard', 'range' => [1, 100], 'max_attempts' => 10],
+            ]);
+
+        $serviceMock->shouldReceive('setupGame')
+            ->with(1)
+            ->once();
+
+        $serviceMock->shouldReceive('getLevelInfo')
+        ->with(1)
+            ->andReturn(['name' => 'Easy', 'range' => [1, 10], 'max_attempts' => 5]);
+
+        $serviceMock->shouldReceive('getRemainingAttempts')
+            ->andReturn(5, 4, 3, 2, 1);
+
+        $serviceMock->shouldReceive('makeGuess')
+            ->with(10)
+            ->times(4)
+            ->andReturnUsing( fn () => [
+                'status' => 'too_high',
+                'message' => 'Too high! Try a lower number 📉',
+                'attempts' => 1,
+                'remaining' => 4
+            ]);
+
+    
+        $serviceMock->shouldReceive('makeGuess')
+            ->with(10)
+            ->once()
+            ->andReturnUsing(fn () => 
+            [
+                'status' => 'lost',
+                'message' => '😞 Game over! The number was 5',
+                'attempts' => 5,
+                'secret_number' => 5,
+            ]);
+
+        $this->artisan('number-guesser')
+            ->expectsOutput('Welcome to the Number Guesser game! 🎯')
+            ->expectsQuestion('Choose your difficulty level:', '1') // Changed to match mock
+            ->expectsQuestion("Enter your guess (5 attempts left)", 10)
+            ->expectsOutput('Too high! Try a lower number 📉')
+            ->expectsQuestion("Enter your guess (4 attempts left)", 10)
+            ->expectsOutput('Too high! Try a lower number 📉')
+            ->expectsQuestion("Enter your guess (3 attempts left)", 10)
+            ->expectsOutput('Too high! Try a lower number 📉')
+            ->expectsQuestion("Enter your guess (2 attempts left)", 10)
+            ->expectsOutput('Too high! Try a lower number 📉')
+            ->expectsQuestion("Enter your guess (1 attempts left)", 10)
+            ->expectsOutput('😞 Game over! The number was 5')
+            ->expectsQuestion('Would you like to play again?', false)
+            ->assertExitCode(0);
     }
 
-    public function testItAllowsPlayingMultipleGames()
+    public function testItAllowsPlayingMultipleGames(): void
     {
-        $this->markTestSkipped();
+        $serviceMock = $this->mock(NumberGuesserService::class);
+
+        $serviceMock->shouldReceive('getAvailableLevels')
+            ->times(2)
+            ->andReturn([
+                1 => ['name' => 'Easy', 'range' => [1, 10], 'max_attempts' => 5],
+                2 => ['name' => 'Medium', 'range' => [1, 50], 'max_attempts' => 7],
+                3 => ['name' => 'Hard', 'range' => [1, 100], 'max_attempts' => 10],
+            ]);
+
+        $serviceMock->shouldReceive('setupGame')
+            ->with(1)
+            ->once();
+
+        $serviceMock->shouldReceive('getLevelInfo')
+            ->with(1)
+            ->once()
+            ->andReturn(['name' => 'Easy', 'range' => [1, 10], 'max_attempts' => 5]);
+        $serviceMock->shouldReceive('getRemainingAttempts')
+            ->once()
+            ->andReturn(5);
+        $serviceMock->shouldReceive('makeGuess')
+            ->with(7)
+            ->once()
+            ->andReturnUsing( fn () => 
+            [
+                'status' => 'won',
+                'message' => '🎉 Congratulations! You guessed the number 7 in 1 attempts!',
+                'attempts' => 1,
+                'secret_number' => 7,
+            ]);
+
+        $serviceMock->shouldReceive('setupGame')
+            ->with(2)
+            ->once();
+        $serviceMock->shouldReceive('getLevelInfo')
+            ->with(2)
+            ->once()
+            ->andReturn(['name' => 'Medium', 'range' => [1, 50], 'max_attempts' => 7]);
+        $serviceMock->shouldReceive('getRemainingAttempts')
+            ->once()
+            ->andReturn(7);
+        $serviceMock->shouldReceive('makeGuess')
+            ->with(15)
+            ->once()
+            ->andReturnUsing(fn () => 
+            [
+                'status' => 'won',
+                'message' => '🎉 Congratulations! You guessed the number 15 in 1 attempts!',
+                'attempts' => 1,
+                'secret_number' => 15,
+            ]);
+
+        $this->artisan('number-guesser')
+            ->expectsOutput('Welcome to the Number Guesser game! 🎯')
+            ->expectsQuestion('Choose your difficulty level:', '1')
+            ->expectsQuestion("Enter your guess (5 attempts left)", 7)
+            ->expectsOutput('🎉 Congratulations! You guessed the number 7 in 1 attempts!')
+            ->expectsQuestion('Would you like to play again?', true)
+            ->expectsOutput('Welcome to the Number Guesser game! 🎯')
+            ->expectsQuestion('Choose your difficulty level:', '2')
+            ->expectsQuestion("Enter your guess (7 attempts left)", 15)
+            ->expectsOutput('🎉 Congratulations! You guessed the number 15 in 1 attempts!')
+            ->expectsQuestion('Would you like to play again?', false)
+            ->assertExitCode(0);
     }
 
     public function testItHandlesExitDuringGame()

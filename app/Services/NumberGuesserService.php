@@ -6,7 +6,6 @@ use RuntimeException;
 
 class NumberGuesserService 
 {
-    // initialise properties with default values - php 7.4+ will throw an error if not set
     private array $levels = [
         1 => [
             'name' => 'Easy',
@@ -34,7 +33,6 @@ class NumberGuesserService
 
     public function setupGame(int $level): void
     {
-        // validate level
         if (!isset($this->levels[$level])) {
             throw new InvalidArgumentException("Invalid level: $level. Available levels: " . implode(', ', array_keys($this->levels)));
         }
@@ -53,7 +51,6 @@ class NumberGuesserService
             throw new RuntimeException('Game is not active');
         }
 
-        // Range validation
         [$min, $max] = $this->levels[$this->currentLevel]['range'];
         if ($guess < $min || $guess > $max) {
             return [
